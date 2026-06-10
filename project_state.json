@@ -9,12 +9,7 @@
     "database": "SQLite",
     "execution_boundary": "AI只做建议和证据整理，不自动执行广告动作"
   },
-  "active_task": {
-    "id": "TASK-008",
-    "name": "处理记录与复盘页",
-    "status": "active",
-    "task_file": "当前任务.md"
-  },
+  "active_task": null,
   "completed_tasks": [
     {
       "id": "TASK-001",
@@ -82,6 +77,16 @@
       "evidence": [
         "新增 scripts/smoke_frontend_suggestion_detail.py",
         "smoke 验证异常详情入口、详情抽屉、AI 建议、溯源 JSON、规则证据和人工处理入口",
+        "smoke 验证前端没有自动执行广告动作按钮",
+        "npm run build 通过"
+      ]
+    },
+    {
+      "id": "TASK-008",
+      "name": "处理记录与复盘页",
+      "evidence": [
+        "新增 scripts/smoke_frontend_decision_review.py",
+        "smoke 验证处理记录与复盘 Tab、处理记录表格、筛选、复盘入口、7 天 / 14 天复盘周期",
         "smoke 验证前端没有自动执行广告动作按钮",
         "npm run build 通过"
       ]
