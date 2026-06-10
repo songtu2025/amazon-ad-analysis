@@ -10,8 +10,8 @@
     "execution_boundary": "AI只做建议和证据整理，不自动执行广告动作"
   },
   "active_task": {
-    "id": "TASK-004",
-    "name": "AI 建议结构化输出",
+    "id": "TASK-005",
+    "name": "人工确认与动作记录",
     "status": "active",
     "task_file": "当前任务.md"
   },
@@ -44,11 +44,20 @@
         "验证异常列表、异常详情、market_id 筛选、anomaly_type 筛选、status 筛选",
         "API 返回内容未发现自动执行广告动作字段"
       ]
+    },
+    {
+      "id": "TASK-004",
+      "name": "AI 建议结构化输出",
+      "evidence": [
+        "新增 scripts/smoke_ai_suggestion.py",
+        "smoke 基于异常事件生成 2 条结构化 AI 建议",
+        "校验 suggestion_level、title、summary、reasoning、risk_note、evidence_summary、recommended_manual_decision、source_trace_json",
+        "建议输出未发现自动执行广告动作字段"
+      ]
     }
   ],
   "blocked_tasks": [],
   "next_tasks": [
-    "TASK-005",
     "TASK-006",
     "TASK-007",
     "TASK-008"
