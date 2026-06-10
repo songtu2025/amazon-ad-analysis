@@ -102,6 +102,18 @@
         "验证前端 React root 入口",
         "API 返回字段未发现自动执行广告动作字段"
       ]
+    },
+    {
+      "id": "TASK-010",
+      "name": "产品目标与规则设置闭环验收",
+      "evidence": [
+        "新增 scripts/smoke_product_settings.py",
+        "使用临时 SQLite 文件库验证产品设置 API 闭环",
+        "验证产品创建、目标设置、规则门槛设置、广告活动绑定、产品详情、产品列表",
+        "验证前端产品目标与规则设置页面入口、保存设置、批量应用和广告活动绑定入口",
+        "API 返回字段未发现自动执行广告动作字段",
+        "python scripts/smoke_real_e2e.py 仍通过"
+      ]
     }
   ],
   "blocked_tasks": [],
