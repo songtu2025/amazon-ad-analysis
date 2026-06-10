@@ -10,8 +10,8 @@
     "execution_boundary": "AI只做建议和证据整理，不自动执行广告动作"
   },
   "active_task": {
-    "id": "TASK-005",
-    "name": "人工确认与动作记录",
+    "id": "TASK-006",
+    "name": "前端异常队列",
     "status": "active",
     "task_file": "当前任务.md"
   },
@@ -54,11 +54,21 @@
         "校验 suggestion_level、title、summary、reasoning、risk_note、evidence_summary、recommended_manual_decision、source_trace_json",
         "建议输出未发现自动执行广告动作字段"
       ]
+    },
+    {
+      "id": "TASK-005",
+      "name": "人工确认与动作记录",
+      "evidence": [
+        "新增 scripts/smoke_manual_decision.py",
+        "smoke 验证 adopt、adopt_with_changes、reject、observe 四种人工处理",
+        "observe 将异常状态更新为 observing，其他处理更新为 handled",
+        "人工处理记录保存操作者、原因、修改动作或观察周期",
+        "处理流程未发现自动执行广告动作字段"
+      ]
     }
   ],
   "blocked_tasks": [],
   "next_tasks": [
-    "TASK-006",
     "TASK-007",
     "TASK-008"
   ],
