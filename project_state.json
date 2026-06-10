@@ -152,6 +152,21 @@
         "未修改 .env、.env.example、frontend/.env.local",
         "未新增任何广告自动执行能力"
       ]
+    },
+    {
+      "id": "TASK-014",
+      "name": "驾驶舱首屏视觉二次打磨",
+      "evidence": [
+        "新增驾驶舱决策摘要区，优先展示待人工确认、高风险异常、整体 ACOS、销售 / 订单",
+        "将同步状态压缩为辅助信息，不再占据首屏主要视觉权重",
+        "保留完整经营指标、趋势图和异常类型分布",
+        "更新 scripts/smoke_ui_alignment.py 覆盖首屏决策摘要和压缩同步区",
+        "截图 tmp/task014/dashboard-first-screen.png 已确认首屏视觉结果",
+        "python scripts/smoke_ui_alignment.py 通过",
+        "npm run build 通过",
+        "python scripts/smoke_real_e2e.py 通过",
+        "未新增任何广告自动执行能力"
+      ]
     }
   ],
   "blocked_tasks": [],

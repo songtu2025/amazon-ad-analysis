@@ -1498,6 +1498,34 @@ const buildProductDraft = (product: Product): ProductDraft => ({
         { label: "异常总数", value: dashboard.overview.anomaly_count.toLocaleString() }
       ]
     : [];
+  const dashboardFocusCards = dashboard
+    ? [
+        {
+          label: "待人工确认",
+          value: dashboard.overview.pending_suggestion_count.toLocaleString(),
+          note: "AI 建议需要运营判断",
+          tone: "danger"
+        },
+        {
+          label: "高风险异常",
+          value: dashboard.overview.high_risk_count.toLocaleString(),
+          note: `${dashboard.overview.anomaly_product_count.toLocaleString()} 个产品受影响`,
+          tone: "warning"
+        },
+        {
+          label: "整体 ACOS",
+          value: formatPercent(dashboard.overview.acos),
+          note: `花费 ${formatMoney(dashboard.overview.cost)}`,
+          tone: "blue"
+        },
+        {
+          label: "销售 / 订单",
+          value: formatMoney(dashboard.overview.sales),
+          note: `${dashboard.overview.orders.toLocaleString()} 单，CVR ${formatPercent(dashboard.overview.cvr)}`,
+          tone: "green"
+        }
+      ]
+    : [];
 
   const activeTitle =
     activeTab === "dashboard"
@@ -1831,49 +1859,45 @@ const buildProductDraft = (product: Product): ProductDraft => ({
                   <Spin spinning={dashboardLoading}>
                     {dashboard ? (
                       <Space direction="vertical" size={16} className="dashboard">
-                        <section className="sync-band">
-                          <Space direction="vertical" size={10} className="drawer-body">
-                            <Space wrap size={16}>
-                              <Text strong>同步状态</Text>
+                        <section className="dashboard-focus-grid">
+                          {dashboardFocusCards.map((card) => (
+                            <Card key={card.label} size="small" className={`focus-card focus-${card.tone}`}>
+                              <Text type="secondary">{card.label}</Text>
+                              <div className="focus-value">{card.value}</div>
+                              <Text className="focus-note">{card.note}</Text>
+                            </Card>
+                          ))}
+                        </section>
+                        <section className="sync-band compact-sync-band">
+                          <div className="sync-summary">
+                            <div className="sync-main-line">
+                              <Text strong>数据同步</Text>
                               {dashboard.sync ? (
                                 <>
                                   <Tag color={dashboard.sync.status === "success" ? "green" : "orange"}>
                                     {syncStatusLabels[dashboard.sync.status] || dashboard.sync.status}
                                   </Tag>
                                   <Text type="secondary">店铺 / 站点 {dashboard.sync.market_id}</Text>
-                                  <Text type="secondary">
-                                    {dashboard.sync.period_start} 至 {dashboard.sync.period_end}
-                                  </Text>
+                                  <Text type="secondary">{dashboard.sync.period_start} 至 {dashboard.sync.period_end}</Text>
                                   <Text type="secondary">写入 {dashboard.sync.rows_synced} 行</Text>
                                 </>
                               ) : (
                                 <Text type="secondary">暂无同步记录</Text>
                               )}
-                              <Text type="secondary">
-                                统计周期 {dashboard.period.start} 至 {dashboard.period.end}
-                              </Text>
+                              <Text type="secondary">统计周期 {dashboard.period.start} 至 {dashboard.period.end}</Text>
+                            </div>
+                            <div className="sync-actions">
+                              {syncRuns.length ? <Text type="secondary">最近 {syncRuns.length} 次同步记录</Text> : null}
                               <Button size="small" onClick={openAnomalyQueueFromDashboard}>
                                 查看异常队列
                               </Button>
-                            </Space>
-                            {syncRuns.length ? (
-                              <div className="sync-history">
-                                {syncRuns.map((run) => (
-                                  <div className="sync-history-row" key={run.id}>
-                                    <Tag color={run.status === "success" ? "green" : run.status === "failed" ? "red" : "orange"}>
-                                      {syncStatusLabels[run.status] || run.status}
-                                    </Tag>
-                                    <Text>{syncSourceLabels[run.source] || run.source}</Text>
-                                    <Text type="secondary">店铺 / 站点 {run.market_id}</Text>
-                                    <Text type="secondary">{run.period_start} 至 {run.period_end}</Text>
-                                    <Text type="secondary">写入 {run.rows_synced} 行</Text>
-                                    <Text type="secondary">{run.finished_at || run.started_at}</Text>
-                                  </div>
-                                ))}
-                              </div>
-                            ) : null}
-                          </Space>
+                            </div>
+                          </div>
                         </section>
+                        <div className="dashboard-section-heading">
+                          <Text strong>经营指标明细</Text>
+                          <Text type="secondary">保留完整指标，用于人工复核和追溯。</Text>
+                        </div>
                         <section className="metric-grid">
                           {metricTiles.map((tile) => (
                             <Card key={tile.label} size="small">
