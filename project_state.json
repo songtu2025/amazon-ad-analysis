@@ -90,6 +90,18 @@
         "smoke 验证前端没有自动执行广告动作按钮",
         "npm run build 通过"
       ]
+    },
+    {
+      "id": "TASK-009",
+      "name": "真实端到端验收",
+      "evidence": [
+        "新增 scripts/smoke_real_e2e.py",
+        "启动本项目后端到 http://127.0.0.1:8001",
+        "启动前端到 http://127.0.0.1:5173",
+        "验收 /health、/api/anomalies、/api/suggestions、/api/decisions、/api/dashboard/health",
+        "验证前端 React root 入口",
+        "API 返回字段未发现自动执行广告动作字段"
+      ]
     }
   ],
   "blocked_tasks": [],
