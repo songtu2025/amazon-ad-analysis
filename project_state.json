@@ -1,0 +1,79 @@
+{
+  "project": "Amazon广告分析",
+  "updated_at": "2026-06-10",
+  "mode": "target_driven_development",
+  "product_scope": {
+    "system_positioning": "SP广告健康监控与决策辅助系统",
+    "ad_type": "SP",
+    "default_period_days": 14,
+    "database": "SQLite",
+    "execution_boundary": "AI只做建议和证据整理，不自动执行广告动作"
+  },
+  "active_task": {
+    "id": "TASK-004",
+    "name": "AI 建议结构化输出",
+    "status": "active",
+    "task_file": "当前任务.md"
+  },
+  "completed_tasks": [
+    {
+      "id": "TASK-001",
+      "name": "积加 SP 数据同步",
+      "evidence": [
+        "真实 SP 关键词报表同步成功",
+        "sp_keyword_metrics 写入 30 条",
+        "原始响应已保存到 data/raw"
+      ]
+    },
+    {
+      "id": "TASK-002",
+      "name": "审查并收敛 SP 异常规则引擎",
+      "evidence": [
+        "新增 scripts/smoke_rule_engine.py",
+        "smoke 使用 SQLite 内存库写入最小 SP fixture",
+        "生成并校验 7 条异常事件",
+        "规则输出未发现自动执行广告动作字段"
+      ]
+    },
+    {
+      "id": "TASK-003",
+      "name": "异常事件 API 收敛",
+      "evidence": [
+        "新增 scripts/smoke_anomaly_api.py",
+        "smoke 使用 FastAPI TestClient 验证异常事件 API",
+        "验证异常列表、异常详情、market_id 筛选、anomaly_type 筛选、status 筛选",
+        "API 返回内容未发现自动执行广告动作字段"
+      ]
+    }
+  ],
+  "blocked_tasks": [],
+  "next_tasks": [
+    "TASK-005",
+    "TASK-006",
+    "TASK-007",
+    "TASK-008"
+  ],
+  "guardrails": {
+    "must_read_before_work": [
+      "AGENTS.md",
+      "project_state.json",
+      "当前任务.md",
+      "开发任务清单.md"
+    ],
+    "must_update_after_success": [
+      "project_state.json",
+      "项目进展.md"
+    ],
+    "forbidden_capabilities": [
+      "自动调整竞价",
+      "自动暂停广告",
+      "自动开启广告",
+      "自动新增关键词",
+      "自动否定关键词",
+      "直接调用广告执行接口"
+    ]
+  },
+  "known_issues": {
+    "sqlite_file_io": "当前受限环境中 SQLite 文件库写入可能出现 disk I/O error，TASK-002 smoke 使用 sqlite:// 内存库验证规则链路。"
+  }
+}
