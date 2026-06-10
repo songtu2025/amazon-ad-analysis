@@ -127,6 +127,31 @@
         "npm run build 通过",
         "python scripts/smoke_real_e2e.py 通过"
       ]
+    },
+    {
+      "id": "TASK-012",
+      "name": "前端 API 指向修正与截图验收",
+      "evidence": [
+        "确认 frontend/.env.local 指向 http://127.0.0.1:8010，与当前真实后端 http://127.0.0.1:8001 不一致",
+        "未修改 frontend/.env.local，仅用临时环境变量 VITE_API_BASE_URL=http://127.0.0.1:8001 启动前端",
+        "截图 tmp/task012/dashboard-fixed-wait.png 已显示驾驶舱真实指标、同步状态、趋势图和异常分布",
+        "python scripts/smoke_real_e2e.py 通过",
+        "未新增任何广告自动执行能力"
+      ]
+    },
+    {
+      "id": "TASK-013",
+      "name": "本地启动配置收敛",
+      "evidence": [
+        "新增 scripts/start_local_dev.ps1",
+        "启动脚本固定后端 http://127.0.0.1:8001、前端 http://127.0.0.1:5173",
+        "启动脚本为前端注入 VITE_API_BASE_URL=http://127.0.0.1:8001",
+        "新增 scripts/smoke_local_dev_config.py",
+        "python scripts/smoke_local_dev_config.py 通过",
+        "python scripts/smoke_real_e2e.py 通过",
+        "未修改 .env、.env.example、frontend/.env.local",
+        "未新增任何广告自动执行能力"
+      ]
     }
   ],
   "blocked_tasks": [],
