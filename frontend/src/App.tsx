@@ -1,4 +1,12 @@
-import { AuditOutlined, EyeOutlined, PlusOutlined, ReloadOutlined, SaveOutlined } from "@ant-design/icons";
+import {
+  AuditOutlined,
+  CheckCircleOutlined,
+  EyeOutlined,
+  PlusOutlined,
+  ReloadOutlined,
+  SafetyCertificateOutlined,
+  SaveOutlined
+} from "@ant-design/icons";
 import {
   Alert,
   App as AntApp,
@@ -1532,13 +1540,24 @@ const buildProductDraft = (product: Product): ProductDraft => ({
       <main className="page">
         <section className="toolbar-band">
           <div className="toolbar">
-            <div>
+            <div className="toolbar-copy">
+              <div className="ops-eyebrow">
+                <SafetyCertificateOutlined />
+                SP 广告健康监控 / 人工决策辅助
+              </div>
               <Title level={3} className="page-title">
                 {activeTitle}
               </Title>
               <Text type="secondary">{activeDescription}</Text>
+              <div className="toolbar-meta">
+                <Tag icon={<CheckCircleOutlined />} color="green">
+                  只读建议
+                </Tag>
+                <Tag color="blue">近 14 天</Tag>
+                <Tag color="gold">人工确认后记录</Tag>
+              </div>
             </div>
-            <Space wrap>
+            <Space wrap className="toolbar-actions">
               {activeTab === "dashboard" ? (
                 <>
                   <InputNumber
@@ -1801,6 +1820,7 @@ const buildProductDraft = (product: Product): ProductDraft => ({
 
         <section className="content">
           <Tabs
+            className="ops-tabs"
             activeKey={activeTab}
             onChange={setActiveTab}
             items={[

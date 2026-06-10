@@ -114,6 +114,19 @@
         "API 返回字段未发现自动执行广告动作字段",
         "python scripts/smoke_real_e2e.py 仍通过"
       ]
+    },
+    {
+      "id": "TASK-011",
+      "name": "UI 方案对齐与核心页面重构",
+      "evidence": [
+        "新增 scripts/smoke_ui_alignment.py",
+        "重构顶部运营定位、只读建议、近 14 天、人工确认状态标签",
+        "统一 Tabs、筛选工具条、指标卡、表格、详情抽屉和 AI 建议区域视觉层级",
+        "保留原有业务功能和 API，不新增广告执行能力",
+        "python scripts/smoke_ui_alignment.py 通过",
+        "npm run build 通过",
+        "python scripts/smoke_real_e2e.py 通过"
+      ]
     }
   ],
   "blocked_tasks": [],
