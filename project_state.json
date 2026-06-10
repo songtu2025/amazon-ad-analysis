@@ -10,8 +10,8 @@
     "execution_boundary": "AI只做建议和证据整理，不自动执行广告动作"
   },
   "active_task": {
-    "id": "TASK-007",
-    "name": "建议详情与溯源页",
+    "id": "TASK-008",
+    "name": "处理记录与复盘页",
     "status": "active",
     "task_file": "当前任务.md"
   },
@@ -75,12 +75,20 @@
         "smoke 验证前端没有自动执行广告动作按钮",
         "npm run build 通过"
       ]
+    },
+    {
+      "id": "TASK-007",
+      "name": "建议详情与溯源页",
+      "evidence": [
+        "新增 scripts/smoke_frontend_suggestion_detail.py",
+        "smoke 验证异常详情入口、详情抽屉、AI 建议、溯源 JSON、规则证据和人工处理入口",
+        "smoke 验证前端没有自动执行广告动作按钮",
+        "npm run build 通过"
+      ]
     }
   ],
   "blocked_tasks": [],
-  "next_tasks": [
-    "TASK-008"
-  ],
+  "next_tasks": [],
   "guardrails": {
     "must_read_before_work": [
       "AGENTS.md",
