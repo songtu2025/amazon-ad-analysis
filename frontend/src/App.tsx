@@ -346,8 +346,19 @@ const hasProductSpMetrics = (product: Product) =>
   (product.sp_metrics?.orders || 0) > 0 ||
   (product.sp_metrics?.sales || 0) > 0;
 
-const needsProductGoalRuleSetup = (product: Product) =>
-  hasProductSpMetrics(product) && (!product.goal || !product.rules || product.rules.target_acos === null);
+const getProductGoalRuleMissingItems = (product: Product): string[] => {
+  const missingItems: string[] = [];
+  if (!product.goal) {
+    missingItems.push("缺少产品目标");
+  }
+  if (!product.rules || product.rules.target_acos === null || typeof product.rules.target_acos === "undefined") {
+    missingItems.push("缺少目标 ACOS");
+  }
+  return missingItems;
+};
+
+const needsProductGoalRuleSetup = (product: Product, productBindingCount = 0) =>
+  isProductAdTuningEligible(product, productBindingCount) && hasProductSpMetrics(product) && getProductGoalRuleMissingItems(product).length > 0;
 
 type ProductAdCoverageStatus = "attributed" | "sp_unattributed" | "not_advertised";
 type ProductAdCoverageFilter = ProductAdCoverageStatus | "all";
@@ -1169,11 +1180,6 @@ const buildProductDraft = (product: Product): ProductDraft => ({
     }
   };
 
-  const productsNeedingGoalRuleSetup = useMemo(
-    () => products.filter((product) => needsProductGoalRuleSetup(product)),
-    [products]
-  );
-
   const productAdCoverageSummary = useMemo(
     () =>
       products.reduce<Record<ProductAdCoverageStatus, number>>(
@@ -1203,13 +1209,24 @@ const buildProductDraft = (product: Product): ProductDraft => ({
         .sort((a, b) => {
           const aBindingCount = productAdBindings.filter((binding) => binding.product_id === a.product.id).length;
           const bBindingCount = productAdBindings.filter((binding) => binding.product_id === b.product.id).length;
-          const setupPriority = Number(needsProductGoalRuleSetup(b.product)) - Number(needsProductGoalRuleSetup(a.product));
+          const setupPriority =
+            Number(needsProductGoalRuleSetup(b.product, bBindingCount)) - Number(needsProductGoalRuleSetup(a.product, aBindingCount));
           const adCoveragePriority = getProductAdCoveragePriority(b.product, bBindingCount) - getProductAdCoveragePriority(a.product, aBindingCount);
           return setupPriority || adCoveragePriority || a.index - b.index;
         })
         .map(({ product }) => product),
     [productAdBindings, productAdCoverageFilter, productCenterView, products]
   );
+
+  const productsNeedingGoalRuleSetup = useMemo(() => {
+    if (productCenterView !== "ad_tuning") {
+      return [];
+    }
+    return productCenterProducts.filter((product) => {
+      const productBindingCount = productAdBindings.filter((binding) => binding.product_id === product.id).length;
+      return needsProductGoalRuleSetup(product, productBindingCount);
+    });
+  }, [productAdBindings, productCenterProducts, productCenterView]);
 
   const selectedGoalRuleProductDraft = selectedGoalRuleProduct
     ? productDrafts[selectedGoalRuleProduct.id] || buildProductDraft(selectedGoalRuleProduct)
@@ -3143,7 +3160,7 @@ const buildProductDraft = (product: Product): ProductDraft => ({
               </Space>
             );
           }
-          if (needsProductGoalRuleSetup(record)) {
+          if (needsProductGoalRuleSetup(record, productBindingCount)) {
             return (
               <Space direction="vertical" size={0}>
                 <Tag color="orange">目标 / 规则待设置</Tag>
@@ -4969,17 +4986,29 @@ const buildProductDraft = (product: Product): ProductDraft => ({
                       {productsNeedingGoalRuleSetup.length > 0 ? (
                         <div className="product-goal-rule-guidance">
                           <div>
-                            <Text strong>待设置目标 / 规则</Text>
+                            <Space size={8} wrap>
+                              <Text strong>需要人工设置产品目标 / 规则</Text>
+                              <Tag color="orange">待设置目标 / 规则</Tag>
+                            </Space>
                             <div className="source-line">
-                              {productsNeedingGoalRuleSetup.length} 个产品已有 SP 指标，但缺少产品目标或目标 ACOS。需要运营人工设置产品目标和规则门槛，系统不会自动生成目标或修改广告。
+                              {productsNeedingGoalRuleSetup.length} 个广告调优对象已有 SP 指标，但缺少人工目标或规则门槛。需要运营人工设置产品目标和规则门槛。
+                              这里只引导运营人工设置，不会自动保存目标 / 规则，也不会自动修改广告；系统不会自动生成目标或修改广告。
                             </div>
                           </div>
                           <div className="goal-rule-guidance-grid">
                             {productsNeedingGoalRuleSetup.slice(0, 3).map((product) => (
                               <div className="goal-rule-guidance-item" key={product.id}>
                                 <Text strong>{product.product_name || product.msku || product.asin || `产品 ${product.id}`}</Text>
-                                <Text type="secondary">
-                                  花费 {formatMoney(product.sp_metrics.cost)} / 订单 {product.sp_metrics.orders} / ACOS {formatPercent(product.sp_metrics.acos)}
+                                <div className="goal-rule-guidance-missing">
+                                  {getProductGoalRuleMissingItems(product).map((item) => (
+                                    <Tag color="orange" key={item}>
+                                      {item}
+                                    </Tag>
+                                  ))}
+                                </div>
+                                <Text type="secondary" className="goal-rule-guidance-metrics">
+                                  当前 SP 指标：花费 {formatMoney(product.sp_metrics.cost)} / 订单 {product.sp_metrics.orders} / ACOS{" "}
+                                  {formatPercent(product.sp_metrics.acos)}
                                 </Text>
                                 <Button size="small" icon={<AuditOutlined />} onClick={() => openGoalRuleDrawer(product)}>
                                   设置目标 / 规则

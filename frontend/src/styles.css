@@ -1007,6 +1007,24 @@ body {
   white-space: nowrap;
 }
 
+.goal-rule-guidance-missing {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.goal-rule-guidance-missing .ant-tag {
+  margin-inline-end: 0;
+}
+
+.goal-rule-guidance-item .goal-rule-guidance-metrics {
+  display: block;
+  overflow: visible;
+  line-height: 1.45;
+  text-overflow: clip;
+  white-space: normal;
+}
+
 .product-goal-rule-drawer .ant-drawer-body {
   background: #f6f8fb;
 }
