@@ -11,9 +11,17 @@ STYLE_PATH = PROJECT_ROOT / "frontend" / "src" / "styles.css"
 REQUIRED_APP_MARKERS = {
     "ops_positioning": "SP 广告健康监控 / 人工决策辅助",
     "read_only_tag": "只读建议",
+    "default_30_days": "start.setDate(start.getDate() - 29)",
+    "thirty_day_tag": "近 30 天",
+    "aggregate_notice": "当前为周期聚合数据",
+    "aggregate_period_text": "不能解读为逐日趋势",
     "manual_confirm_tag": "人工确认后记录",
     "dashboard_focus_cards": "dashboardFocusCards",
     "manual_decision_focus": "待人工确认",
+    "identity_strip": "dashboard-identity-strip",
+    "manual_task_panel": "manual-task-panel",
+    "metric_detail_card": "metric-detail-card",
+    "compact_campaign_source_list": "compact-campaign-source-list",
     "compact_sync_band": "compact-sync-band",
     "ops_tabs_class": 'className="ops-tabs"',
     "safety_icon": "SafetyCertificateOutlined",
@@ -25,14 +33,26 @@ REQUIRED_STYLE_MARKERS = {
     "ops_eyebrow": ".ops-eyebrow",
     "toolbar_actions": ".toolbar-actions",
     "ops_tabs": ".ops-tabs",
+    "dashboard_identity_strip": ".dashboard-identity-strip",
+    "dashboard_hero_grid": ".dashboard-hero-grid",
+    "manual_task_panel": ".manual-task-panel",
     "dashboard_focus_grid": ".dashboard-focus-grid",
     "focus_card": ".focus-card",
     "compact_sync_band": ".compact-sync-band",
-    "metric_card_accent": ".metric-grid .ant-card::before",
+    "dashboard_secondary_grid": ".dashboard-secondary-grid",
+    "aggregate_note_panel": ".aggregate-note-panel",
+    "aggregate_metric_row": ".aggregate-metric-row",
+    "metric_tile_accent": ".metric-tile::before",
+    "compact_campaign_source_list": ".compact-campaign-source-list",
     "table_header": ".ant-table-thead > tr > th",
     "drawer_title": ".ant-drawer-title",
     "suggestion_panel": ".suggestion-panel",
 }
+
+FORBIDDEN_UI_MARKERS = [
+    'className="identity-panel"',
+    ".identity-panel",
+]
 
 FORBIDDEN_AUTO_ACTION_MARKERS = [
     "auto_execute",
@@ -65,6 +85,10 @@ def main() -> None:
     if forbidden_hits:
         fail("发现自动执行广告动作标记：" + ", ".join(forbidden_hits))
 
+    forbidden_ui_hits = [marker for marker in FORBIDDEN_UI_MARKERS if marker in app_source or marker in style_source]
+    if forbidden_ui_hits:
+        fail("发现旧版大身份卡片标记：" + ", ".join(forbidden_ui_hits))
+
     print(
         json.dumps(
             {
@@ -72,13 +96,20 @@ def main() -> None:
                 "checked": [
                     "ops_positioning",
                     "toolbar_status_tags",
+                    "thirty_day_period",
+                    "aggregate_period_notice",
                     "dashboard_focus_cards",
+                    "dashboard_identity_strip",
+                    "manual_task_panel",
                     "compact_sync_band",
+                    "dashboard_secondary_grid",
+                    "metric_tile_accent",
+                    "compact_campaign_source_list",
                     "ops_tabs",
-                    "metric_card_accent",
                     "table_header_style",
                     "drawer_title_style",
                     "suggestion_panel_style",
+                    "no_old_identity_panel",
                     "no_auto_execution_markers",
                 ],
             },

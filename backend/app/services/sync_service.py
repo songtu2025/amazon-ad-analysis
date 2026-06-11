@@ -9,6 +9,7 @@ from app.core.config import PROJECT_ROOT
 from app.models.ad_metrics import SpKeywordMetric, SpSearchTermMetric
 from app.models.sync import SyncRun
 from app.services.gerpgo_client import GerpgoClient
+from app.services.product_attribution_service import apply_active_product_ad_bindings
 
 
 RAW_DIR = PROJECT_ROOT / "data" / "raw"
@@ -30,6 +31,14 @@ def _string(value: Any) -> str | None:
     if value in (None, ""):
         return None
     return str(value)
+
+
+def _first_string(row: dict[str, Any], *keys: str) -> str | None:
+    for key in keys:
+        value = _string(row.get(key))
+        if value is not None:
+            return value
+    return None
 
 
 def _save_raw_payload(source: str, market_id: int, start_date: str, end_date: str, pages: list[dict[str, Any]]) -> Path:
@@ -80,10 +89,10 @@ def _search_term_metric_from_row(row: dict[str, Any], synced_at: datetime) -> Sp
         campaign_name=_string(row.get("campaignName")),
         ad_group_id=_string(row.get("groupId")),
         ad_group_name=_string(row.get("groupName")),
-        keyword_id=_string(row.get("keywordId")),
-        keyword_text=_string(row.get("keywordText")),
-        search_term=_string(row.get("searchTerm")),
-        match_type=_string(row.get("matchType")),
+        keyword_id=_first_string(row, "keywordId", "targetId"),
+        keyword_text=_first_string(row, "keywordText", "targetingText"),
+        search_term=_first_string(row, "searchTerm", "query"),
+        match_type=_first_string(row, "matchType", "targetingType"),
         data_date=_string(row.get("createDate")),
         impressions=_integer(row.get("impressions")),
         clicks=_integer(row.get("clicks")),
@@ -144,6 +153,13 @@ async def sync_sp_keywords(
         synced_at = datetime.now()
         metrics = [_metric_from_row(row, synced_at) for row in rows]
         db.add_all(metrics)
+        db.flush()
+        attribution = apply_active_product_ad_bindings(
+            db,
+            market_id=market_id,
+            period_start=start_text,
+            period_end=end_text,
+        )
 
         run.status = "success"
         run.rows_synced = len(metrics)
@@ -160,6 +176,7 @@ async def sync_sp_keywords(
             "raw_path": str(raw_path),
             "page_size": count,
             "max_pages": max_pages,
+            "attribution": attribution,
         }
     except Exception as exc:
         run.status = "failed"
@@ -232,6 +249,13 @@ async def sync_sp_search_terms(
         synced_at = datetime.now()
         metrics = [_search_term_metric_from_row(row, synced_at) for row in rows]
         db.add_all(metrics)
+        db.flush()
+        attribution = apply_active_product_ad_bindings(
+            db,
+            market_id=market_id,
+            period_start=start_text,
+            period_end=end_text,
+        )
 
         run.status = "success"
         run.rows_synced = len(metrics)
@@ -248,6 +272,7 @@ async def sync_sp_search_terms(
             "raw_path": str(raw_path),
             "page_size": count,
             "max_pages": max_pages,
+            "attribution": attribution,
         }
     except Exception as exc:
         run.status = "failed"

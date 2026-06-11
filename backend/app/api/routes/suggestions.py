@@ -8,6 +8,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
+from app.api.routes.anomalies import real_anomaly_filters
 from app.api.routes.normalization import is_valid_anomaly_type, normalize_anomaly_type
 from app.models.anomaly import AnomalyEvent
 from app.models.decision import ManualDecision
@@ -124,7 +125,7 @@ def list_suggestions(
     _validate_product_id(product_id)
     _validate_anomaly_event_id(anomaly_event_id)
     filters = []
-    anomaly_filters = []
+    anomaly_filters = real_anomaly_filters()
     if anomaly_event_id is not None:
         filters.append(AiSuggestion.anomaly_event_id == anomaly_event_id)
     if market_id is not None:

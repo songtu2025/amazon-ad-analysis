@@ -44,6 +44,8 @@ def assert_script_config() -> None:
         "$FrontendPort = 5173",
         "VITE_API_BASE_URL",
         '$ApiBaseUrl = "http://127.0.0.1:$BackendPort"',
+        "/api/products/unbound-ad-sources",
+        "Backend port is running an old API",
         "npm run dev",
         "python -m uvicorn app.main:app",
     ]

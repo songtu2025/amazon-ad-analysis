@@ -24,6 +24,13 @@ function Test-HttpOk {
     }
 }
 
+function Test-BackendReady {
+    if (-not (Test-HttpOk "$ApiBaseUrl/health")) {
+        return $false
+    }
+    return Test-HttpOk "$ApiBaseUrl/api/products/unbound-ad-sources"
+}
+
 function Get-ListeningProcessIds {
     param([int]$Port)
     $lines = netstat -ano | Select-String ":$Port\s+.*LISTENING"
@@ -58,9 +65,14 @@ function Test-FrontendApiBase {
 }
 
 function Start-Backend {
-    if (Test-HttpOk "$ApiBaseUrl/health") {
+    if (Test-BackendReady) {
         Write-Host "Backend ready: $ApiBaseUrl"
         return
+    }
+    if (Test-HttpOk "$ApiBaseUrl/health") {
+        Write-Host "Backend port is running an old API. Restarting port $BackendPort."
+        Stop-PortListeners -Port $BackendPort
+        Start-Sleep -Seconds 1
     }
 
     $outLog = Join-Path $LogDir "backend.out.log"
@@ -69,7 +81,7 @@ function Start-Backend {
     Start-Process -FilePath powershell.exe -ArgumentList "-NoProfile", "-ExecutionPolicy", "Bypass", "-Command", $command -WindowStyle Hidden | Out-Null
 
     for ($i = 0; $i -lt 30; $i++) {
-        if (Test-HttpOk "$ApiBaseUrl/health") {
+        if (Test-BackendReady) {
             Write-Host "Backend started: $ApiBaseUrl"
             return
         }

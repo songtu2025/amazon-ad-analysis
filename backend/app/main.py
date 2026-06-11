@@ -6,6 +6,7 @@ from app.api.routes.dashboard import router as dashboard_router
 from app.api.routes.decisions import router as decisions_router
 from app.api.routes.products import router as products_router
 from app.api.routes.reviews import router as reviews_router
+from app.api.routes.search_terms import router as search_terms_router
 from app.api.routes.suggestions import router as suggestions_router
 from app.api.routes.sync import router as sync_router
 from app.core.config import get_settings
@@ -43,6 +44,7 @@ app.include_router(sync_router, prefix="/api/sync", tags=["sync"])
 app.include_router(dashboard_router, prefix="/api/dashboard", tags=["dashboard"])
 app.include_router(anomalies_router, prefix="/api/anomalies", tags=["anomalies"])
 app.include_router(products_router, prefix="/api/products", tags=["products"])
+app.include_router(search_terms_router, prefix="/api/search-terms", tags=["search_terms"])
 app.include_router(suggestions_router, prefix="/api/suggestions", tags=["suggestions"])
 app.include_router(decisions_router, prefix="/api/decisions", tags=["decisions"])
 app.include_router(reviews_router, prefix="/api/reviews", tags=["reviews"])

@@ -90,6 +90,11 @@ class GerpgoClient:
             raise RuntimeError(f"积加 API 返回错误 code={code}, messages={messages}")
         return result
 
+    async def fetch_market_names_text(self, market_ids: list[int]) -> str:
+        raw = await self.post("/middle/base/marketNames/query", {"markerIds": market_ids})
+        data = raw.get("data")
+        return data if isinstance(data, str) else ""
+
     async def iter_sp_keyword_pages(
         self,
         market_id: int,

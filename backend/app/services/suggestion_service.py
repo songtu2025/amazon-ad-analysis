@@ -26,6 +26,23 @@ def _suggestion_level(rule_result: dict[str, object], anomaly: AnomalyEvent) -> 
     return "adoptable" if anomaly.severity == "high" else "small_test"
 
 
+def _product_sales_snapshot_summary(evidence: dict[str, object]) -> str | None:
+    snapshot = evidence.get("product_sales_snapshot")
+    if not isinstance(snapshot, dict):
+        return None
+    parts = []
+    for key, label in [
+        ("sales", "销售额"),
+        ("orders", "订单"),
+        ("sessions", "Sessions"),
+        ("net_profit", "净利"),
+    ]:
+        value = snapshot.get(key)
+        if value is not None:
+            parts.append(f"{label} {value}")
+    return f"产品经营背景 {'，'.join(parts)}" if parts else None
+
+
 def _evidence_summary(evidence: dict[str, object]) -> str:
     parts = []
     for key, label in [
@@ -47,6 +64,9 @@ def _evidence_summary(evidence: dict[str, object]) -> str:
         value = evidence.get(key)
         if value is not None:
             parts.append(f"{label} {value}")
+    snapshot_summary = _product_sales_snapshot_summary(evidence)
+    if snapshot_summary:
+        parts.append(snapshot_summary)
     return "，".join(parts) if parts else "暂无可用指标快照"
 
 
@@ -66,6 +86,7 @@ def _source_context(anomaly: AnomalyEvent, evidence: dict[str, object]) -> dict[
         "keyword_text": evidence.get("keyword_text"),
         "search_term": evidence.get("search_term"),
         "match_type": evidence.get("match_type"),
+        "product_sales_snapshot": evidence.get("product_sales_snapshot"),
         "period_start": anomaly.period_start,
         "period_end": anomaly.period_end,
     }

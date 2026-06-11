@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 
 from app.models.ad_metrics import SpKeywordMetric, SpSearchTermMetric
 from app.models.anomaly import AnomalyEvent
-from app.models.product import Product, ProductGoal, ProductRule
+from app.models.product import Product, ProductGoal, ProductRule, ProductSalesSnapshot
 
 
 DEFAULT_MIN_CLICKS = 20
@@ -34,6 +34,55 @@ def _product_goal_by_id(db: Session, product_ids: list[int | None]) -> dict[int,
         goal.product_id: goal.goal_type
         for goal in db.execute(select(ProductGoal).where(ProductGoal.product_id.in_(selected_ids))).scalars().all()
     }
+
+
+def _sales_snapshots_by_product(
+    db: Session,
+    product_ids: list[int | None],
+    period_start: str,
+    period_end: str,
+) -> dict[int, ProductSalesSnapshot]:
+    selected_ids = sorted({product_id for product_id in product_ids if product_id is not None})
+    if not selected_ids:
+        return {}
+    snapshots = db.execute(
+        select(ProductSalesSnapshot).where(
+            ProductSalesSnapshot.product_id.in_(selected_ids),
+            ProductSalesSnapshot.period_start == period_start,
+            ProductSalesSnapshot.period_end == period_end,
+        )
+    ).scalars().all()
+    return {snapshot.product_id: snapshot for snapshot in snapshots if snapshot.product_id is not None}
+
+
+def _sales_snapshot_payload(snapshot: ProductSalesSnapshot) -> dict[str, object]:
+    return {
+        "period_start": snapshot.period_start,
+        "period_end": snapshot.period_end,
+        "units_ordered": int(snapshot.units_ordered or 0),
+        "orders": int(snapshot.orders or 0),
+        "sales": round(float(snapshot.sales or 0.0), 4),
+        "sessions": int(snapshot.sessions or 0),
+        "order_cvr": round(float(snapshot.order_cvr or 0.0), 4),
+        "ads_spend": round(float(snapshot.ads_spend or 0.0), 4),
+        "ads_sales": round(float(snapshot.ads_sales or 0.0), 4),
+        "acos": round(float(snapshot.acos or 0.0), 4),
+        "gross_profit": round(float(snapshot.gross_profit or 0.0), 4),
+        "net_profit": round(float(snapshot.net_profit or 0.0), 4),
+    }
+
+
+def _attach_sales_snapshot(
+    evidence: dict[str, object],
+    snapshots_by_product: dict[int, ProductSalesSnapshot],
+) -> None:
+    product_id = evidence.get("product_id")
+    if product_id is None:
+        return
+    snapshot = snapshots_by_product.get(int(product_id))
+    if snapshot is None:
+        return
+    evidence["product_sales_snapshot"] = _sales_snapshot_payload(snapshot)
 
 
 def _acos_severity(acos: float, target_acos: float) -> str:
@@ -102,6 +151,7 @@ def generate_clicks_no_orders_anomalies(
 
     rows = db.execute(stmt).all()
     product_goals = _product_goal_by_id(db, [row.product_id for row in rows])
+    sales_snapshots = _sales_snapshots_by_product(db, [row.product_id for row in rows], period_start, period_end)
 
     delete_filters = [
         AnomalyEvent.anomaly_type == "clicks_no_orders",
@@ -143,6 +193,7 @@ def generate_clicks_no_orders_anomalies(
             "sales": round(sales, 4),
             "cvr": round(cvr, 4),
         }
+        _attach_sales_snapshot(evidence, sales_snapshots)
         rule_result = {
             "anomaly_type": "clicks_no_orders",
             "severity": severity,
@@ -248,6 +299,7 @@ def generate_search_terms_clicks_no_orders_anomalies(
 
     rows = db.execute(stmt).all()
     product_goals = _product_goal_by_id(db, [row.product_id for row in rows])
+    sales_snapshots = _sales_snapshots_by_product(db, [row.product_id for row in rows], period_start, period_end)
 
     delete_filters = [
         AnomalyEvent.anomaly_type == "clicks_no_orders",
@@ -291,6 +343,7 @@ def generate_search_terms_clicks_no_orders_anomalies(
             "sales": round(sales, 4),
             "cvr": round(cvr, 4),
         }
+        _attach_sales_snapshot(evidence, sales_snapshots)
         rule_result = {
             "anomaly_type": "clicks_no_orders",
             "severity": severity,
@@ -406,6 +459,7 @@ def generate_acos_worse_anomalies(
         stmt = stmt.where(SpKeywordMetric.market_id == market_id)
 
     rows = db.execute(stmt).all()
+    sales_snapshots = _sales_snapshots_by_product(db, [row.product_id for row in rows], period_start, period_end)
 
     delete_filters = [
         AnomalyEvent.anomaly_type == "acos_worse",
@@ -459,6 +513,7 @@ def generate_acos_worse_anomalies(
             "min_clicks": min_clicks,
             "min_spend": min_spend,
         }
+        _attach_sales_snapshot(evidence, sales_snapshots)
         rule_result = {
             "anomaly_type": "acos_worse",
             "severity": severity,
@@ -574,6 +629,7 @@ def generate_spend_spike_anomalies(
         stmt = stmt.where(SpKeywordMetric.market_id == market_id)
 
     rows = db.execute(stmt).all()
+    sales_snapshots = _sales_snapshots_by_product(db, [row.product_id for row in rows], period_start, period_end)
 
     delete_filters = [
         AnomalyEvent.anomaly_type == "spend_spike",
@@ -633,6 +689,7 @@ def generate_spend_spike_anomalies(
             "min_spend": min_spend,
             "min_orders": min_orders,
         }
+        _attach_sales_snapshot(evidence, sales_snapshots)
         matched_rules = []
         if low_orders:
             matched_rules.append(
@@ -763,6 +820,7 @@ def generate_cvr_drop_anomalies(
         stmt = stmt.where(SpKeywordMetric.market_id == market_id)
 
     rows = db.execute(stmt).all()
+    sales_snapshots = _sales_snapshots_by_product(db, [row.product_id for row in rows], period_start, period_end)
 
     delete_filters = [
         AnomalyEvent.anomaly_type == "cvr_drop",
@@ -819,6 +877,7 @@ def generate_cvr_drop_anomalies(
             "target_acos": target_acos,
             "min_clicks": min_clicks,
         }
+        _attach_sales_snapshot(evidence, sales_snapshots)
         rule_result = {
             "anomaly_type": "cvr_drop",
             "severity": severity,
@@ -930,6 +989,7 @@ def generate_impression_low_anomalies(
         stmt = stmt.where(SpKeywordMetric.market_id == market_id)
 
     rows = db.execute(stmt).all()
+    sales_snapshots = _sales_snapshots_by_product(db, [row.product_id for row in rows], period_start, period_end)
 
     delete_filters = [
         AnomalyEvent.anomaly_type == "impression_low",
@@ -977,6 +1037,7 @@ def generate_impression_low_anomalies(
             "orders": orders,
             "sales": round(sales, 4),
         }
+        _attach_sales_snapshot(evidence, sales_snapshots)
         rule_result = {
             "anomaly_type": "impression_low",
             "severity": severity,
@@ -1057,6 +1118,7 @@ def generate_inventory_goal_conflict_anomalies(
         stmt = stmt.where(Product.market_id == market_id)
 
     rows = db.execute(stmt).all()
+    sales_snapshots = _sales_snapshots_by_product(db, [row.id for row in rows], period_start, period_end)
 
     delete_filters = [
         AnomalyEvent.anomaly_type == "inventory_goal_conflict",
@@ -1083,6 +1145,7 @@ def generate_inventory_goal_conflict_anomalies(
             "inventory_quantity": row.inventory_quantity,
             "inventory_guard": row.inventory_guard,
         }
+        _attach_sales_snapshot(evidence, sales_snapshots)
         rule_result = {
             "anomaly_type": "inventory_goal_conflict",
             "severity": "high",

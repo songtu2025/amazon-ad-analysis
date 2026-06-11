@@ -69,7 +69,7 @@ def _ensure_sqlite_schema() -> None:
 
 
 def init_db() -> None:
-    from app.models import ad_metrics, anomaly, decision, product, review, suggestion, sync  # noqa: F401
+    from app.models import ad_metrics, anomaly, decision, market, product, review, suggestion, sync  # noqa: F401
 
     Base.metadata.create_all(bind=engine)
     _ensure_sqlite_schema()

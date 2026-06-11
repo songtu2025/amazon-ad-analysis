@@ -122,11 +122,12 @@ def assert_frontend_entries() -> list[str]:
     app_source = FRONTEND_APP_PATH.read_text(encoding="utf-8")
     api_source = FRONTEND_API_PATH.read_text(encoding="utf-8")
     checks = {
-        "product_tab": "产品目标与规则设置" in app_source,
+        "product_center_tab": 'label: "产品中心"' in app_source,
+        "attribution_tab": 'label: "广告归因"' in app_source,
         "goal_filter": 'placeholder="产品目标"' in app_source,
         "save_button": "保存设置" in app_source,
         "batch_apply": "批量应用" in app_source,
-        "campaign_binding": "绑定广告活动" in app_source,
+        "product_basis_panel": "产品基础设置" in app_source,
         "create_product": "createProduct" in api_source,
         "update_goal": "updateProductGoal" in api_source,
         "update_rules": "updateProductRules" in api_source,
@@ -134,7 +135,9 @@ def assert_frontend_entries() -> list[str]:
     }
     missing = [name for name, ok in checks.items() if not ok]
     if missing:
-        fail("前端产品设置入口缺失：" + ", ".join(missing))
+        fail("前端产品中心入口缺失：" + ", ".join(missing))
+    if "绑定广告活动" in app_source or 'placeholder="广告活动 ID"' in app_source:
+        fail("产品中心仍包含广告活动绑定输入")
     return list(checks.keys())
 
 

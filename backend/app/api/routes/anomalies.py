@@ -1,7 +1,7 @@
 from datetime import date
 
 from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy import select
+from sqlalchemy import or_, select
 from sqlalchemy.orm import Session
 
 from app.core.config import get_settings
@@ -28,6 +28,7 @@ router = APIRouter()
 GOAL_TYPES = {"test_keywords", "scale", "profit", "rank_carryover", "clear_inventory", "stop_loss"}
 SUGGESTION_LEVELS = {"adoptable", "small_test", "observe", "blocked"}
 ANOMALY_STATUSES = {"pending", "observing", "handled"}
+TEST_OBJECT_MARKERS = ("DEMO", "SMOKE", "TASK")
 
 
 def _validate_date_range(start_date: date | None, end_date: date | None) -> None:
@@ -48,6 +49,20 @@ def _validate_product_id(product_id: int | None) -> None:
 def _validate_anomaly_id(anomaly_id: int) -> None:
     if anomaly_id <= 0:
         raise HTTPException(status_code=400, detail="异常事件 ID anomaly_id 必须大于 0")
+
+
+def real_anomaly_filters() -> list[object]:
+    filters: list[object] = []
+    fields = [
+        AnomalyEvent.object_id,
+        AnomalyEvent.object_name,
+        AnomalyEvent.rule_result_json,
+        AnomalyEvent.evidence_json,
+    ]
+    for field in fields:
+        for marker in TEST_OBJECT_MARKERS:
+            filters.append(or_(field.is_(None), ~field.ilike(f"%{marker}%")))
+    return filters
 
 
 def _anomaly_payload(anomaly: AnomalyEvent) -> dict[str, object]:
@@ -85,7 +100,7 @@ def list_anomalies(
     _validate_date_range(start_date, end_date)
     _validate_market_id(market_id)
     _validate_product_id(product_id)
-    filters = []
+    filters = real_anomaly_filters()
     if market_id is not None:
         filters.append(AnomalyEvent.market_id == market_id)
     if product_id is not None:
