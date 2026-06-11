@@ -10,11 +10,32 @@
     "execution_boundary": "AI只做建议和证据整理，不自动执行广告动作"
   },
   "active_task": {
-    "id": "TASK-077",
-    "name": "真实广告调优对象目标规则后的异常建议链路验收",
+    "id": "TASK-078",
+    "name": "真实目标规则保存后的异常建议入队门禁",
     "status": "completed"
   },
   "completed_tasks": [
+    {
+      "id": "TASK-078",
+      "name": "真实目标规则保存后的异常建议入队门禁",
+      "evidence": [
+        "先运行 python scripts/smoke_real_goal_rule_queue_gate.py，红灯确认验收脚本不存在",
+        "新增 scripts/smoke_real_goal_rule_queue_gate.py",
+        "脚本使用 SQLite 只读 URI 打开真实 data/app.db，并通过修改时间确认未写真实库",
+        "真实库当前找到 1 个广告调优对象：RBK004 kids sunglasses / MSKU RBK004 / product_id=2，活跃归因规则数为 1",
+        "当前真实广告指标：点击 138、花费 150.47、订单 52、销售额 545.79、ACOS 27.57%",
+        "当前门禁输出 workflow_status=needs_manual_goal_rule、queue_ready=false",
+        "当前缺口为 product_goal 和 target_acos，需要运营在前端产品中心人工保存产品目标和目标 ACOS 等规则门槛",
+        "python scripts/smoke_real_goal_rule_queue_gate.py 通过",
+        "python scripts/smoke_real_no_demo_anomaly_objects.py 通过，真实异常数和建议数仍为 0，符合缺人工目标 / 规则不应入队的当前状态",
+        "python scripts/smoke_real_e2e.py 通过",
+        "未修改 .env、.env.example、frontend/.env.local、后端、前端、真实 data/app.db",
+        "未新增任何广告自动执行能力",
+        "按用户要求：本小任务完成后已执行 Product Design 复核",
+        "Product Design 复核结论：门禁把当前队列为空翻译成可执行前置任务，即为 RBK004 广告调优对象补产品目标和目标 ACOS，而不是让运营猜系统哪里坏了",
+        "Product Design 复核发现：下一步应把该前置缺口做进前端引导，让运营从真实页面直接完成人工目标 / 规则设置"
+      ]
+    },
     {
       "id": "TASK-077",
       "name": "真实广告调优对象目标规则后的异常建议链路验收",
@@ -1527,9 +1548,9 @@
   "blocked_tasks": [],
   "next_tasks": [
     {
-      "id": "TASK-078",
-      "name": "真实目标 / 规则保存后的异常建议入队验收",
-      "reason": "TASK-077 已证明临时库中真实广告对象在有人工目标 / 规则后可生成异常和 AI 建议；下一步应验证运营通过前端保存真实目标 / 规则后，真实队列能从空态进入异常与建议待确认状态。"
+      "id": "TASK-079",
+      "name": "前端人工目标规则设置引导收敛",
+      "reason": "TASK-078 用只读门禁明确真实队列为空的前置原因后，下一步应让运营在前端更容易完成真实目标 / 规则设置。"
     }
   ],
   "guardrails": {
@@ -1576,6 +1597,6 @@
     "product_center_table_density": "TASK-074 已修复：产品中心默认进入 广告调优对象 视图，销售档案视图隐藏广告目标 / 规则列，不再重复展示只读说明。",
     "product_center_filter_overlap": "TASK-075 已修复：广告覆盖状态筛选只在 全部产品 视图展示，默认 广告调优对象 和 销售档案 视图不再展示该筛选。",
     "product_ad_object_api_scope": "TASK-076 已修复：产品 API 直接返回 ad_coverage_status 和 is_ad_tuning_eligible，销售表现产品可以保留为档案，但默认不会进入广告调优对象。",
-    "real_ad_object_anomaly_chain": "TASK-077 已验证：复制真实库到临时库后，RBK004 活跃归因广告对象在模拟人工目标 / 规则后可生成 acos_worse 异常和可溯源 AI 建议；真实 data/app.db 未被写入。真实主流程当前仍为空，是因为真实库缺少人工目标 / 规则。"
+    "real_ad_object_anomaly_chain": "TASK-077 已验证：复制真实库到临时库后，RBK004 活跃归因广告对象在模拟人工目标 / 规则后可生成 acos_worse 异常和可溯源 AI 建议；真实 data/app.db 未被写入。TASK-078 已补只读门禁，真实主流程当前为空的原因是 RBK004 缺 product_goal 和 target_acos，需要运营在前端人工保存目标 / 规则。"
   }
 }
