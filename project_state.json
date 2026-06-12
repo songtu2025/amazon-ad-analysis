@@ -10,11 +10,34 @@
     "execution_boundary": "AI只做建议和证据整理，不自动执行广告动作"
   },
   "active_task": {
-    "id": "TASK-080",
-    "name": "真实目标规则保存后异常建议入队验收",
+    "id": "TASK-081",
+    "name": "产品中心已配置未触发异常状态可视化",
     "status": "completed"
   },
   "completed_tasks": [
+    {
+      "id": "TASK-081",
+      "name": "产品中心已配置未触发异常状态可视化",
+      "evidence": [
+        "新增 scripts/smoke_frontend_configured_no_anomaly_state.py，先红灯确认产品中心缺少 已配置未触发异常 状态，再实现转绿",
+        "frontend/src/App.tsx 新增 isConfiguredNoAnomalyTargetMatch",
+        "产品中心 目标与数据表现是否匹配 列新增 目标已配置 / 当前未触发异常 状态",
+        "该状态只在产品目标、规则、目标 ACOS、SP 指标都存在，且 target_match.status === matched 时出现",
+        "缺目标 / 规则时仍优先显示 目标 / 规则待设置",
+        "当前真实门禁仍返回 workflow_status=no_anomaly_under_current_rule、queue_ready=false，说明不入队来自真实规则判断",
+        "python scripts\\smoke_frontend_configured_no_anomaly_state.py 通过",
+        "python scripts\\smoke_frontend_real_goal_rule_gate_guidance.py 通过",
+        "python scripts\\smoke_frontend_product_goal_rule_guidance.py 通过",
+        "python scripts\\smoke_real_goal_rule_queue_gate.py 通过",
+        "python scripts\\smoke_real_e2e.py 通过",
+        "frontend 目录 npm run build 通过，仍有既有 Vite chunk size warning",
+        "未修改 .env、.env.example、frontend/.env.local、后端、真实 data/app.db",
+        "未新增任何广告自动执行能力",
+        "按用户要求：本小任务完成后已执行 Product Design 复核",
+        "Product Design 复核结论：把空队列的原因放回产品行里，能让运营知道这是目标规则生效后的正常结果，不是系统没跑起来",
+        "Product Design 复核发现：下一步可以把异常队列空态也改成同一口径，显示 当前所有已配置对象均未越线"
+      ]
+    },
     {
       "id": "TASK-080",
       "name": "真实目标规则保存后异常建议入队验收",
@@ -1589,9 +1612,9 @@
   "blocked_tasks": [],
   "next_tasks": [
     {
-      "id": "TASK-081",
-      "name": "产品中心已配置未触发异常状态可视化",
-      "reason": "TASK-080 已确认真实规则保存后当前未触发异常；下一步应让前端明确显示 已配置目标 / 当前未触发异常，避免运营把空队列误读成系统无效。"
+      "id": "TASK-082",
+      "name": "异常队列空态原因可解释化",
+      "reason": "TASK-081 已在产品中心说明已配置对象当前未触发异常；下一步可在异常队列空态中同步展示 当前已配置对象未越线，避免运营切到队列页仍误读为空数据或系统无效。"
     }
   ],
   "guardrails": {
@@ -1628,7 +1651,7 @@
     "manual_review_loop": "TASK-063 已验收真实异常从人工处理记录到 7d 复盘记录的闭环；当前 review_id=1 可通过 /api/reviews?decision_id=1 读取。",
     "review_modal_manual_boundary": "TASK-064 已修复：复盘弹窗内已补齐人工边界提示，说明只记录人工判断和指标快照，不自动修改广告。",
     "demo_anomaly_object": "TASK-065 已修复：主工作流 API 与驾驶舱统计已排除 DEMO / SMOKE / TASK 测试异常对象，历史 DEMO 记录保留但不再作为真实异常展示。",
-    "real_product_goal_missing": "TASK-080 已确认用户保存真实目标规则后，系统可读取 goal_type=profit、target_acos=0.3。当前真实 ACOS 27.57% 未高于目标 ACOS 30%，因此 workflow_status=no_anomaly_under_current_rule、queue_ready=false，这是规则生效后的正确不入队状态。",
+    "real_product_goal_missing": "TASK-080 已确认用户保存真实目标规则后，系统可读取 goal_type=profit、target_acos=0.3。当前真实 ACOS 27.57% 未高于目标 ACOS 30%，因此 workflow_status=no_anomaly_under_current_rule、queue_ready=false，这是规则生效后的正确不入队状态。TASK-081 已在产品中心补充 目标已配置 / 当前未触发异常 展示，避免运营把空队列误读成系统无效。",
     "ad_draft_product_identity": "TASK-068 已修复可见性：目标 / 规则抽屉会识别 SP广告来源草稿 且缺少 ASIN 或销售表现快照的产品，展示 产品身份待核查 和同店铺销售表现候选。当前仍未确认真实归因关系，候选只读展示。",
     "ad_draft_identity_resolution": "TASK-069 已修复：产品身份待核查区域新增 去广告归因页核查 / 修正归因，点击后关闭目标设置抽屉、进入广告归因页，并显示候选销售产品横幅，避免继续直接给草稿对象保存目标。",
     "ad_draft_attribution_source_focus": "TASK-070 已修复：从草稿产品身份核查进入广告归因页时，会保留草稿广告来源线索，自动定位可能相关的广告来源证据行，并保留候选销售表现产品作为人工确认目标。",

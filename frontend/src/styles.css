@@ -417,6 +417,14 @@ body {
   white-space: normal;
 }
 
+.target-match-ready-state {
+  max-width: 190px;
+}
+
+.target-match-ready-state .compact-note {
+  max-width: 190px;
+}
+
 .object-meta {
   display: block;
   max-width: 360px;

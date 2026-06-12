@@ -360,6 +360,13 @@ const getProductGoalRuleMissingItems = (product: Product): string[] => {
 const needsProductGoalRuleSetup = (product: Product, productBindingCount = 0) =>
   isProductAdTuningEligible(product, productBindingCount) && hasProductSpMetrics(product) && getProductGoalRuleMissingItems(product).length > 0;
 
+const isConfiguredNoAnomalyTargetMatch = (product: Product) =>
+  product.target_match.status === "matched" &&
+  !!product.goal &&
+  !!product.rules &&
+  typeof product.rules.target_acos === "number" &&
+  hasProductSpMetrics(product);
+
 type ProductAdCoverageStatus = "attributed" | "sp_unattributed" | "not_advertised";
 type ProductAdCoverageFilter = ProductAdCoverageStatus | "all";
 type ProductCenterView = "ad_tuning" | "sales_profile" | "all";
@@ -3166,6 +3173,18 @@ const buildProductDraft = (product: Product): ProductDraft => ({
                 <Tag color="orange">目标 / 规则待设置</Tag>
                 <Text type="secondary" className="compact-note">
                   有 SP 指标，需人工设置产品目标和规则后再参与异常判断
+                </Text>
+              </Space>
+            );
+          }
+          if (isConfiguredNoAnomalyTargetMatch(record)) {
+            const targetAcos = record.rules?.target_acos;
+            return (
+              <Space direction="vertical" size={0} className="target-match-ready-state">
+                <Tag color="green">目标已配置</Tag>
+                <Text strong>当前未触发异常</Text>
+                <Text type="secondary" className="compact-note">
+                  ACOS {formatPercent(record.sp_metrics.acos)} 未高于目标 ACOS {formatPercent(typeof targetAcos === "number" ? targetAcos : 0)}
                 </Text>
               </Space>
             );
