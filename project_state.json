@@ -10,11 +10,34 @@
     "execution_boundary": "AI只做建议和证据整理，不自动执行广告动作"
   },
   "active_task": {
-    "id": "TASK-084",
-    "name": "产品中心真实商品与广告草稿对象口径拆分",
+    "id": "TASK-085",
+    "name": "广告草稿对象关联真实商品的人工修正动作",
     "status": "completed"
   },
   "completed_tasks": [
+    {
+      "id": "TASK-085",
+      "name": "广告草稿对象关联真实商品的人工修正动作",
+      "evidence": [
+        "新增 scripts/smoke_frontend_ad_draft_rebind_action.py，先红灯确认缺少草稿对象关联真实商品处理函数和边界文案，再实现转绿",
+        "frontend/src/App.tsx 新增 openAdDraftRealProductRebind，从草稿对象已确认归因规则中带出广告来源，复用现有归因证据弹窗",
+        "产品中心广告草稿对象主行新增 关联真实商品 人工动作入口",
+        "归因产品下拉候选已排除 SP广告来源草稿，避免再次选择草稿对象",
+        "归因证据弹窗新增说明：只更新本地归因关系和证据快照，不会修改广告；草稿对象上的产品目标 / 规则不会自动迁移",
+        "浏览器复核时当前 in-app browser 点击产品中心页签仍未触发切换，已如实记录；源码 smoke、真实 API smoke 和构建均已通过",
+        "python scripts\\smoke_frontend_ad_draft_rebind_action.py 通过",
+        "python scripts\\smoke_frontend_ad_draft_product_center_clarity.py 通过",
+        "python scripts\\smoke_frontend_product_center_view_scope.py 通过",
+        "python scripts\\smoke_real_goal_rule_queue_gate.py 通过",
+        "python scripts\\smoke_real_e2e.py 通过",
+        "frontend 目录 npm run build 通过，仍有既有 Vite chunk size warning",
+        "未修改 .env、.env.example、frontend/.env.local、后端、真实 data/app.db",
+        "未新增任何广告自动执行能力",
+        "按用户要求：本小任务完成后已执行 Product Design 复核",
+        "Product Design 复核结论：关联真实商品入口把草稿对象口径问题转化为明确的人工修正动作，符合运营决策辅助边界",
+        "Product Design 复核发现：下一步应验收运营完成关联后，产品中心是否能从草稿对象视角回到真实销售商品视角"
+      ]
+    },
     {
       "id": "TASK-084",
       "name": "产品中心真实商品与广告草稿对象口径拆分",
@@ -1659,9 +1682,9 @@
   "blocked_tasks": [],
   "next_tasks": [
     {
-      "id": "TASK-085",
-      "name": "广告草稿对象关联真实商品的人工修正动作",
-      "reason": "TASK-084 已把对象口径拆开，但当前仍只是提示；下一步需要让运营能明确把广告草稿对象修正关联到真实销售商品，且保持人工确认边界。"
+      "id": "TASK-086",
+      "name": "人工关联真实商品后的产品中心状态验收",
+      "reason": "TASK-085 已补入口但未写真实库；下一步需要在运营人工完成关联后，只读验收归因规则、搜索词归属、产品中心展示和目标规则边界是否回到真实商品口径。"
     }
   ],
   "guardrails": {
@@ -1709,6 +1732,6 @@
     "product_center_filter_overlap": "TASK-075 已修复：广告覆盖状态筛选只在 全部产品 视图展示，默认 广告调优对象 和 销售档案 视图不再展示该筛选。",
     "product_ad_object_api_scope": "TASK-076 已修复：产品 API 直接返回 ad_coverage_status 和 is_ad_tuning_eligible，销售表现产品可以保留为档案，但默认不会进入广告调优对象。",
     "real_ad_object_anomaly_chain": "TASK-077 已验证：复制真实库到临时库后，RBK004 活跃归因广告对象在模拟人工目标 / 规则后可生成 acos_worse 异常和可溯源 AI 建议；真实 data/app.db 未被写入。TASK-078 已补只读门禁，真实主流程当前为空的原因是 RBK004 缺 product_goal 和 target_acos，需要运营在前端人工保存目标 / 规则。",
-    "product_center_ad_draft_identity_risk": "TASK-084 启动前只读核对确认：当前产品中心广告调优对象 RBK004 kids sunglasses 是 category=SP广告来源草稿、asin=null、无销售表现快照的广告草稿对象；其 SP 花费 / 订单 / ACOS 来自人工归因后的广告组指标，不能继续在主表中被表达为真实商品身份。"
+    "product_center_ad_draft_identity_risk": "TASK-085 已补人工修正入口：产品中心广告草稿对象主行可点击 关联真实商品，复用现有归因证据弹窗，并且归因产品下拉排除 SP广告来源草稿；本任务未写真实 data/app.db，仍需运营人工完成关联后再验收真实商品口径。"
   }
 }

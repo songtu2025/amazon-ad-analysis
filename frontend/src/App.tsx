@@ -1889,6 +1889,44 @@ const buildProductDraft = (product: Product): ProductDraft => ({
     setActiveTab("attribution");
   };
 
+  const openAdDraftRealProductRebind = (adDraftProduct: Product, candidateProductId?: number) => {
+    const binding = productAdBindings.find((binding) => binding.product_id === adDraftProduct.id && binding.status === "active");
+    const candidateProduct = products.find((product) => product.id === candidateProductId) || null;
+    setAdDraftAttributionReviewProduct(candidateProduct);
+    setAdDraftAttributionReviewSourceProduct(adDraftProduct);
+    setAttributionProductId(candidateProductId ?? null);
+    setProductMarketId(adDraftProduct.market_id ?? null);
+
+    if (!binding) {
+      setActiveTab("attribution");
+      message.warning("未找到该草稿对象已确认的广告来源，请在广告归因页人工选择广告来源后确认。");
+      return;
+    }
+
+    const source: UnboundAdSource = {
+      scope_type: binding.scope_type,
+      scope_id: binding.scope_id,
+      scope_name: binding.scope_name,
+      market_id: binding.market_id,
+      campaign_id: binding.scope_type === "campaign" ? binding.scope_id : null,
+      campaign_name: binding.scope_type === "campaign" ? binding.scope_name : null,
+      ad_group_id: binding.scope_type === "ad_group" ? binding.scope_id : null,
+      ad_group_name: binding.scope_type === "ad_group" ? binding.scope_name : null,
+      metric_rows: 0,
+      keyword_count: 0,
+      ad_group_count: binding.scope_type === "ad_group" ? 1 : 0,
+      search_term_rows: 0,
+      impressions: 0,
+      clicks: 0,
+      cost: 0,
+      orders: 0,
+      sales: 0,
+      acos: 0,
+      cvr: 0
+    };
+    void openAttributionEvidence(source, candidateProductId);
+  };
+
   const saveProductSettings = async (productId: number) => {
     const draft = productDrafts[productId];
     const product = products.find((item) => item.id === productId);
@@ -2620,10 +2658,12 @@ const buildProductDraft = (product: Product): ProductDraft => ({
 
   const attributionProductOptions = useMemo(
     () =>
-      products.map((product) => ({
-        value: product.id,
-        label: product.product_name || product.asin || product.msku || `产品 ${product.id}`
-      })),
+      products
+        .filter((product) => !isAdDraftProduct(product))
+        .map((product) => ({
+          value: product.id,
+          label: product.product_name || product.asin || product.msku || `产品 ${product.id}`
+        })),
     [products]
   );
   const selectedAttributionCandidate = useMemo(
@@ -3056,6 +3096,13 @@ const buildProductDraft = (product: Product): ProductDraft => ({
                 <Text type="secondary" className="compact-note">
                   来自 SP 广告来源草稿，不是销售表现商品档案
                 </Text>
+                <Button
+                  size="small"
+                  icon={<AuditOutlined />}
+                  onClick={() => void openAdDraftRealProductRebind(record, findAdDraftIdentityCandidates(record, products)[0]?.id)}
+                >
+                  关联真实商品
+                </Button>
               </div>
             ) : null}
             <Text strong className="product-identity-name">
@@ -3474,7 +3521,7 @@ const buildProductDraft = (product: Product): ProductDraft => ({
         }
       }
     ],
-    [productAdBindings, productDrafts, productSavingId]
+    [productAdBindings, productDrafts, productSavingId, products]
   );
 
   const productCenterTableColumns = useMemo<ColumnsType<Product>>(
@@ -5523,6 +5570,7 @@ const buildProductDraft = (product: Product): ProductDraft => ({
                 type="info"
                 showIcon
                 message="仅保存本地归因规则和证据快照，不会自动修改广告活动、广告组、关键词或竞价。"
+                description="只更新本地归因关系和证据快照，不会修改广告；草稿对象上的产品目标 / 规则不会自动迁移。"
               />
               <section>
                 <Text strong>归因对象</Text>
