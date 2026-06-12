@@ -437,6 +437,25 @@ body {
   max-width: 210px;
 }
 
+.product-family-ad-object-hint {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 6px;
+  border: 1px solid #91caff;
+  border-radius: 6px;
+  background: #f0f7ff;
+}
+
+.product-family-evidence-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  color: #305174;
+  font-size: 12px;
+  line-height: 1.35;
+}
+
 .anomaly-empty-reason {
   display: flex;
   flex-direction: column;

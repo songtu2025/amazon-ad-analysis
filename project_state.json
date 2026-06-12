@@ -10,11 +10,55 @@
     "execution_boundary": "AI只做建议和证据整理，不自动执行广告动作"
   },
   "active_task": {
-    "id": "TASK-085",
-    "name": "广告草稿对象关联真实商品的人工修正动作",
+    "id": "TASK-087",
+    "name": "产品中心商品族归属提示与人工路径",
     "status": "completed"
   },
   "completed_tasks": [
+    {
+      "id": "TASK-087",
+      "name": "产品中心商品族归属提示与人工路径",
+      "evidence": [
+        "新增 scripts/smoke_frontend_product_family_ad_object_path.py，先红灯确认缺少商品族提示函数、证据文案和人工路径文案，再实现转绿",
+        "frontend/src/App.tsx 新增 findProductFamilyCandidates 和 getAdObjectGranularityHint，基于当前已加载产品和活跃归因证据判断疑似商品族广告对象",
+        "产品中心广告草稿对象新增 疑似商品族广告对象 提示",
+        "商品族提示展示 同系列候选、Top 销售占比、搜索词未命中明确 ASIN / MSKU / SKU",
+        "人工路径文案调整为：先选择 / 创建商品族；如能确认单品，再细分到具体 SKU",
+        "保留 关联真实商品 入口和本地归因边界文案",
+        "浏览器复核：页面可正常加载且控制台无错误，但当前 in-app browser 仍无法通过 Ant Tabs 切换到产品中心；未把浏览器产品中心画面作为通过依据",
+        "python scripts\\smoke_frontend_product_family_ad_object_path.py 通过",
+        "python scripts\\smoke_frontend_ad_draft_rebind_action.py 通过",
+        "python scripts\\smoke_frontend_ad_draft_product_center_clarity.py 通过",
+        "python scripts\\smoke_ad_object_attribution_granularity.py 通过",
+        "python scripts\\smoke_real_goal_rule_queue_gate.py 通过",
+        "python scripts\\smoke_real_e2e.py 通过",
+        "frontend 目录 npm run build 通过，仍有既有 Vite chunk size warning",
+        "未修改 .env、.env.example、frontend/.env.local、后端、真实 data/app.db",
+        "未新增任何广告自动执行能力",
+        "按用户要求：本小任务完成后已执行 Product Design 复核",
+        "Product Design 复核结论：商品族提示能阻止运营继续把商品族广告对象误压成单 SKU；下一步应补真正的商品族人工归属模型，而不是只停留在提示"
+      ]
+    },
+    {
+      "id": "TASK-086",
+      "name": "广告对象归属层级只读诊断",
+      "evidence": [
+        "新增 scripts/smoke_ad_object_attribution_granularity.py，先红灯确认脚本不存在，再实现转绿",
+        "smoke 使用 SQLite 只读 URI 打开真实 data/app.db，并验证修改时间未变化",
+        "当前活跃绑定对象为 RBK004-kids sunglasses-广泛，绑定产品仍是 SP广告来源草稿",
+        "脚本提取系列词 RBK004，找到 12 个同系列真实销售商品候选",
+        "同系列商品总销售额 260746.47，Top 商品销售占比 0.2563，销售不集中",
+        "当前广告对象有 26 条搜索词，未命中明确 ASIN / MSKU / SKU",
+        "RBK004 当前归属层级判断为 product_family",
+        "python scripts\\smoke_ad_object_attribution_granularity.py 通过",
+        "python scripts\\smoke_real_goal_rule_queue_gate.py 通过",
+        "python scripts\\smoke_real_e2e.py 通过",
+        "未修改 .env、.env.example、frontend/.env.local、后端、前端、真实 data/app.db",
+        "未新增任何广告自动执行能力",
+        "按用户要求：本小任务完成后已执行 Product Design 复核",
+        "Product Design 复核结论：下一步界面不应继续把该对象推进到强选单 SKU，而应先展示 疑似商品族广告对象，再给运营选择 / 创建商品族或继续细分到单 SKU 的人工路径"
+      ]
+    },
     {
       "id": "TASK-085",
       "name": "广告草稿对象关联真实商品的人工修正动作",
@@ -1682,9 +1726,9 @@
   "blocked_tasks": [],
   "next_tasks": [
     {
-      "id": "TASK-086",
-      "name": "人工关联真实商品后的产品中心状态验收",
-      "reason": "TASK-085 已补入口但未写真实库；下一步需要在运营人工完成关联后，只读验收归因规则、搜索词归属、产品中心展示和目标规则边界是否回到真实商品口径。"
+      "id": "TASK-088",
+      "name": "商品族人工归属最小模型",
+      "reason": "TASK-087 已把商品族风险展示给运营；下一步需要补本地商品族对象和人工归属记录，否则界面只能提示，不能形成可复盘的归属闭环。"
     }
   ],
   "guardrails": {
@@ -1732,6 +1776,7 @@
     "product_center_filter_overlap": "TASK-075 已修复：广告覆盖状态筛选只在 全部产品 视图展示，默认 广告调优对象 和 销售档案 视图不再展示该筛选。",
     "product_ad_object_api_scope": "TASK-076 已修复：产品 API 直接返回 ad_coverage_status 和 is_ad_tuning_eligible，销售表现产品可以保留为档案，但默认不会进入广告调优对象。",
     "real_ad_object_anomaly_chain": "TASK-077 已验证：复制真实库到临时库后，RBK004 活跃归因广告对象在模拟人工目标 / 规则后可生成 acos_worse 异常和可溯源 AI 建议；真实 data/app.db 未被写入。TASK-078 已补只读门禁，真实主流程当前为空的原因是 RBK004 缺 product_goal 和 target_acos，需要运营在前端人工保存目标 / 规则。",
-    "product_center_ad_draft_identity_risk": "TASK-085 已补人工修正入口：产品中心广告草稿对象主行可点击 关联真实商品，复用现有归因证据弹窗，并且归因产品下拉排除 SP广告来源草稿；本任务未写真实 data/app.db，仍需运营人工完成关联后再验收真实商品口径。"
+    "product_center_ad_draft_identity_risk": "TASK-085 已补人工修正入口：产品中心广告草稿对象主行可点击 关联真实商品，复用现有归因证据弹窗，并且归因产品下拉排除 SP广告来源草稿；本任务未写真实 data/app.db，仍需运营人工完成关联后再验收真实商品口径。",
+    "ad_object_granularity": "TASK-086 已只读诊断：RBK004-kids sunglasses-广泛 当前更像商品族广告对象，证据为 12 个同系列真实销售商品、Top 销售占比 25.63%、26 条搜索词未命中明确 ASIN / MSKU / SKU；后续 UI 不应强迫运营单选 SKU。TASK-087 已在产品中心增加 疑似商品族广告对象 提示和 先选择 / 创建商品族，再细分到具体 SKU 的人工路径。"
   }
 }

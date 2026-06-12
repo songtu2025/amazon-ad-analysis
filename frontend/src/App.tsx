@@ -524,6 +524,86 @@ function findAdDraftIdentityCandidates(adDraftProduct: Product, products: Produc
     .map((item) => item.candidate);
 }
 
+function extractProductFamilyToken(product: Product): string | null {
+  const text = [product.product_name, product.msku, product.sku].filter(Boolean).join(" ");
+  const familyToken = text.match(/[A-Za-z]{2,}\d{3,}[A-Za-z0-9]*/)?.[0];
+  return familyToken ? familyToken.toUpperCase() : null;
+}
+
+function findProductFamilyCandidates(adDraftProduct: Product, products: Product[]): Product[] {
+  const familyToken = extractProductFamilyToken(adDraftProduct);
+  if (!familyToken) {
+    return [];
+  }
+  const normalizedFamilyToken = familyToken.toLowerCase();
+  return products.filter((candidate) => {
+    if (candidate.id === adDraftProduct.id || isAdDraftProduct(candidate) || !candidate.sales_snapshot) {
+      return false;
+    }
+    if (adDraftProduct.market_id !== null && candidate.market_id !== adDraftProduct.market_id) {
+      return false;
+    }
+    return productIdentityText(candidate).includes(normalizedFamilyToken);
+  });
+}
+
+type ProductFamilyAdObjectHint = {
+  candidateCount: number;
+  topSalesShare: number;
+  searchTermCount: number;
+  specificSearchHitCount: number;
+};
+
+function productSpecificTokens(products: Product[], familyToken: string | null): string[] {
+  const family = (familyToken || "").toLowerCase();
+  const tokens = products
+    .flatMap((product) => [product.asin, product.msku, product.sku])
+    .map((value) => normalizeProductIdentityText(value))
+    .filter((token) => token.length >= 6 && token !== family);
+  return Array.from(new Set(tokens));
+}
+
+function bindingSearchTermTexts(binding: ProductAdBinding | undefined): string[] {
+  const evidence = parseNullableJsonObject(binding?.evidence_json || null);
+  const topSearchTerms = evidence.top_search_terms;
+  if (!Array.isArray(topSearchTerms)) {
+    return [];
+  }
+  return topSearchTerms
+    .filter((item): item is Record<string, unknown> => !!item && typeof item === "object" && !Array.isArray(item))
+    .map((item) => `${item.keyword_text || ""} ${item.search_term || ""}`.trim())
+    .filter(Boolean);
+}
+
+function getAdObjectGranularityHint(adDraftProduct: Product, products: Product[], bindings: ProductAdBinding[]): ProductFamilyAdObjectHint | null {
+  if (!needsAdDraftIdentityReview(adDraftProduct)) {
+    return null;
+  }
+  const candidates = findProductFamilyCandidates(adDraftProduct, products);
+  if (candidates.length < 3) {
+    return null;
+  }
+  const totalSales = candidates.reduce((sum, product) => sum + (product.sales_snapshot?.sales || 0), 0);
+  const topSales = Math.max(...candidates.map((product) => product.sales_snapshot?.sales || 0));
+  const topSalesShare = totalSales > 0 ? topSales / totalSales : 0;
+  const activeBinding = bindings.find((binding) => binding.product_id === adDraftProduct.id && binding.status === "active");
+  const searchTexts = bindingSearchTermTexts(activeBinding);
+  const productTokens = productSpecificTokens(candidates, extractProductFamilyToken(adDraftProduct));
+  const specificSearchHitCount = searchTexts.filter((text) => {
+    const normalized = normalizeProductIdentityText(text);
+    return productTokens.some((token) => normalized.includes(token));
+  }).length;
+  if (topSalesShare >= 0.6 || specificSearchHitCount > 0) {
+    return null;
+  }
+  return {
+    candidateCount: candidates.length,
+    topSalesShare,
+    searchTermCount: searchTexts.length,
+    specificSearchHitCount
+  };
+}
+
 function adSourceIdentityText(source: UnboundAdSource): string {
   return normalizeProductIdentityText(
     [
@@ -3088,7 +3168,9 @@ const buildProductDraft = (product: Product): ProductDraft => ({
         dataIndex: "product_name",
         width: 340,
         fixed: "left",
-        render: (_value, record) => (
+        render: (_value, record) => {
+          const familyHint = getAdObjectGranularityHint(record, products, productAdBindings);
+          return (
           <div className="product-identity-cell">
             {needsAdDraftIdentityReview(record) ? (
               <div className="product-center-ad-draft-identity">
@@ -3096,6 +3178,23 @@ const buildProductDraft = (product: Product): ProductDraft => ({
                 <Text type="secondary" className="compact-note">
                   来自 SP 广告来源草稿，不是销售表现商品档案
                 </Text>
+                {familyHint ? (
+                  <div className="product-family-ad-object-hint">
+                    <Tag color="blue">疑似商品族广告对象</Tag>
+                    <div className="product-family-evidence-list">
+                      <span>同系列候选 {familyHint.candidateCount} 个</span>
+                      <span>Top 销售占比 {formatPercent(familyHint.topSalesShare)}</span>
+                      <span>
+                        {familyHint.specificSearchHitCount === 0
+                          ? "搜索词未命中明确 ASIN / MSKU / SKU"
+                          : `搜索词命中明确 SKU 线索 ${familyHint.specificSearchHitCount} 条`}
+                      </span>
+                    </div>
+                    <Text type="secondary" className="compact-note">
+                      建议先选择 / 创建商品族；如能确认单品，再细分到具体 SKU
+                    </Text>
+                  </div>
+                ) : null}
                 <Button
                   size="small"
                   icon={<AuditOutlined />}
@@ -3120,7 +3219,8 @@ const buildProductDraft = (product: Product): ProductDraft => ({
               <Tag className="product-identity-tag">类目 {record.category || "-"}</Tag>
             </div>
           </div>
-        )
+          );
+        }
       },
       {
         title: "店铺 / 数据来源",
