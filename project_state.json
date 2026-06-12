@@ -10,11 +10,35 @@
     "execution_boundary": "AI只做建议和证据整理，不自动执行广告动作"
   },
   "active_task": {
-    "id": "TASK-081",
-    "name": "产品中心已配置未触发异常状态可视化",
+    "id": "TASK-082",
+    "name": "异常队列空态原因可解释化",
     "status": "completed"
   },
   "completed_tasks": [
+    {
+      "id": "TASK-082",
+      "name": "异常队列空态原因可解释化",
+      "evidence": [
+        "新增 scripts/smoke_frontend_anomaly_empty_reason.py，先红灯确认异常队列缺少空态原因解释，再实现转绿",
+        "frontend/src/App.tsx 新增 configuredNoAnomalyProducts 和 renderAnomalyQueueEmptyState",
+        "异常队列在 anomalies.length === 0 且存在已配置未触发异常产品时，显示 当前已配置对象均未越线",
+        "空态说明 不是系统无数据或异常生成失败，并显示已配置且未触发异常对象数量",
+        "当 displayedAnomalies.length === 0 但 anomalies.length > 0 时，只显示 当前筛选条件下暂无异常，不误判为全局健康",
+        "空态提供 查看产品中心目标 入口，切回产品中心广告调优对象视图",
+        "当前真实门禁仍返回 workflow_status=no_anomaly_under_current_rule、queue_ready=false，说明空态解释对应真实规则判断",
+        "python scripts\\smoke_frontend_anomaly_empty_reason.py 通过",
+        "python scripts\\smoke_frontend_configured_no_anomaly_state.py 通过",
+        "python scripts\\smoke_frontend_anomaly_status_scope.py 通过",
+        "python scripts\\smoke_real_goal_rule_queue_gate.py 通过",
+        "python scripts\\smoke_real_e2e.py 通过",
+        "frontend 目录 npm run build 通过，仍有既有 Vite chunk size warning",
+        "未修改 .env、.env.example、frontend/.env.local、后端、真实 data/app.db",
+        "未新增任何广告执行能力",
+        "按用户要求：本小任务完成后已执行 Product Design 复核",
+        "Product Design 复核结论：异常队列空态现在把 无异常 翻译成运营可判断的业务状态，同时保留筛选空态，避免把筛选无结果误说成全局健康",
+        "Product Design 复核发现：下一步应继续做真实日常使用的主链路巡检，优先从驾驶舱进入异常队列、产品中心和复盘页的跨页状态一致性开始"
+      ]
+    },
     {
       "id": "TASK-081",
       "name": "产品中心已配置未触发异常状态可视化",
@@ -1612,9 +1636,9 @@
   "blocked_tasks": [],
   "next_tasks": [
     {
-      "id": "TASK-082",
-      "name": "异常队列空态原因可解释化",
-      "reason": "TASK-081 已在产品中心说明已配置对象当前未触发异常；下一步可在异常队列空态中同步展示 当前已配置对象未越线，避免运营切到队列页仍误读为空数据或系统无效。"
+      "id": "TASK-083",
+      "name": "主工作流跨页状态一致性巡检",
+      "reason": "TASK-082 已让异常队列空态解释真实未越线状态；下一步应从驾驶舱入口、异常队列、产品中心、处理记录与复盘页做只读巡检，确认日常运营主路径状态口径一致。"
     }
   ],
   "guardrails": {
@@ -1646,7 +1670,7 @@
     "product_center_identity_ui": "TASK-058 已修正产品中心店铺列：前端不再展示 market_id，改为显示 rivbos / US；浏览器复查首屏前 5 行通过。当前表格仍偏宽，后续可在独立 UI 收敛任务中处理横向滚动。",
     "sales_performance_next_step": "用户补充确认销售表现接口基础信息：/operation/sts/salesAnalysis/page，限流每 5 秒 1 次。TASK-057 已接入产品经营快照，只作为广告判断背景证据。",
     "product_sales_snapshot": "TASK-060 已把经营快照从 JSON 溯源前置为建议详情里的 产品经营背景 可读区块；无快照时显示明确空态。",
-    "anomaly_queue_status_filter": "TASK-061 已修复：异常队列默认展示 全部状态，驾驶舱入口也会切到 全部状态，不再因观察中状态导致默认空列表。",
+    "anomaly_queue_status_filter": "TASK-061 已修复：异常队列默认展示 全部状态，驾驶舱入口也会切到 全部状态，不再因观察中状态导致默认空列表。TASK-082 已补充异常队列空态原因解释：真实异常数为 0 且存在已配置未越线对象时，显示 当前已配置对象均未越线；筛选导致为空时只显示筛选无结果。",
     "dashboard_default_period_drift": "TASK-062 已修复：驾驶舱默认滚动周期会在首次加载时对齐最近成功同步周期；浏览器复查显示 2026-05-12 至 2026-06-10，销售额 2,912.62，订单 239，ACOS 30.4%。",
     "manual_review_loop": "TASK-063 已验收真实异常从人工处理记录到 7d 复盘记录的闭环；当前 review_id=1 可通过 /api/reviews?decision_id=1 读取。",
     "review_modal_manual_boundary": "TASK-064 已修复：复盘弹窗内已补齐人工边界提示，说明只记录人工判断和指标快照，不自动修改广告。",

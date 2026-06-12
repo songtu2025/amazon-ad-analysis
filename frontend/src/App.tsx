@@ -1235,6 +1235,15 @@ const buildProductDraft = (product: Product): ProductDraft => ({
     });
   }, [productAdBindings, productCenterProducts, productCenterView]);
 
+  const configuredNoAnomalyProducts = useMemo(
+    () =>
+      products.filter((product) => {
+        const productBindingCount = productAdBindings.filter((binding) => binding.product_id === product.id).length;
+        return isProductAdTuningEligible(product, productBindingCount) && isConfiguredNoAnomalyTargetMatch(product);
+      }),
+    [productAdBindings, products]
+  );
+
   const selectedGoalRuleProductDraft = selectedGoalRuleProduct
     ? productDrafts[selectedGoalRuleProduct.id] || buildProductDraft(selectedGoalRuleProduct)
     : null;
@@ -2135,6 +2144,36 @@ const buildProductDraft = (product: Product): ProductDraft => ({
     () => anomalies.filter((anomaly) => !suggestionLevel || anomalySuggestionLevel(anomaly) === suggestionLevel),
     [anomalies, suggestionLevel]
   );
+
+  const renderAnomalyQueueEmptyState = () => {
+    if (displayedAnomalies.length === 0 && anomalies.length > 0) {
+      return <Empty description="当前筛选条件下暂无异常" />;
+    }
+    if (anomalies.length === 0 && configuredNoAnomalyProducts.length > 0) {
+      return (
+        <div className="anomaly-empty-reason">
+          <Empty
+            description={
+              <Space direction="vertical" size={4}>
+                <Text strong>当前已配置对象均未越线</Text>
+                <Text type="secondary">不是系统无数据或异常生成失败；当前人工目标规则下没有需要进入队列的异常。</Text>
+                <Text type="secondary">已配置且未触发异常对象：{configuredNoAnomalyProducts.length} 个</Text>
+              </Space>
+            }
+          />
+          <Button
+            onClick={() => {
+              setProductCenterView("ad_tuning");
+              setActiveTab("products");
+            }}
+          >
+            查看产品中心目标
+          </Button>
+        </div>
+      );
+    }
+    return <Empty description="暂无异常" />;
+  };
 
   const columns = useMemo<ColumnsType<Anomaly>>(
     () => [
@@ -4680,7 +4719,7 @@ const buildProductDraft = (product: Product): ProductDraft => ({
                       columns={columns}
                       dataSource={displayedAnomalies}
                       pagination={{ pageSize: 10, showSizeChanger: false }}
-                      locale={{ emptyText: <Empty description="暂无异常" /> }}
+                      locale={{ emptyText: renderAnomalyQueueEmptyState() }}
                       scroll={{ x: 1400 }}
                     />
                   </>
