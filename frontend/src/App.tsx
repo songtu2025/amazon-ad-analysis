@@ -3044,12 +3044,20 @@ const buildProductDraft = (product: Product): ProductDraft => ({
   const productColumns = useMemo<ColumnsType<Product>>(
     () => [
       {
-        title: "真实产品身份",
+        title: "产品 / 广告对象身份",
         dataIndex: "product_name",
         width: 340,
         fixed: "left",
         render: (_value, record) => (
           <div className="product-identity-cell">
+            {needsAdDraftIdentityReview(record) ? (
+              <div className="product-center-ad-draft-identity">
+                <Tag color="orange">广告对象待关联真实商品</Tag>
+                <Text type="secondary" className="compact-note">
+                  来自 SP 广告来源草稿，不是销售表现商品档案
+                </Text>
+              </div>
+            ) : null}
             <Text strong className="product-identity-name">
               {record.product_name || record.asin || record.msku || `产品 ${record.id}`}
             </Text>
@@ -3196,6 +3204,11 @@ const buildProductDraft = (product: Product): ProductDraft => ({
         width: 180,
         render: (_, record) => {
           const productBindingCount = productAdBindings.filter((binding) => binding.product_id === record.id).length;
+          const adDraftRuleScopeWarning = needsAdDraftIdentityReview(record) ? (
+            <Text type="secondary" className="compact-note ad-draft-rule-scope-warning">
+              当前规则挂在广告草稿对象上，关联真实商品后再作为产品级规则使用
+            </Text>
+          ) : null;
           if (!isProductAdTuningEligible(record, productBindingCount)) {
             return (
               <Space direction="vertical" size={0}>
@@ -3203,6 +3216,7 @@ const buildProductDraft = (product: Product): ProductDraft => ({
                 <Text type="secondary" className="compact-note">
                   {productAdCoverageMeta.not_advertised.description}
                 </Text>
+                {adDraftRuleScopeWarning}
               </Space>
             );
           }
@@ -3213,6 +3227,7 @@ const buildProductDraft = (product: Product): ProductDraft => ({
                 <Text type="secondary" className="compact-note">
                   有 SP 指标，需人工设置产品目标和规则后再参与异常判断
                 </Text>
+                {adDraftRuleScopeWarning}
               </Space>
             );
           }
@@ -3225,6 +3240,7 @@ const buildProductDraft = (product: Product): ProductDraft => ({
                 <Text type="secondary" className="compact-note">
                   ACOS {formatPercent(record.sp_metrics.acos)} 未高于目标 ACOS {formatPercent(typeof targetAcos === "number" ? targetAcos : 0)}
                 </Text>
+                {adDraftRuleScopeWarning}
               </Space>
             );
           }
@@ -3236,6 +3252,7 @@ const buildProductDraft = (product: Product): ProductDraft => ({
               <Text type="secondary" className="compact-note">
                 {record.target_match.reason}
               </Text>
+              {adDraftRuleScopeWarning}
             </Space>
           );
         }
